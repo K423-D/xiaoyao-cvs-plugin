@@ -8,10 +8,11 @@ import {
 import Data from "../components/Data.js"
 import path from 'path';
 import fetch from "node-fetch";
+import gsCfg from '../model/gsCfg.js'
 const _path = process.cwd();
 const __dirname = path.resolve();
 
-const list = ["shiwu_tujian", "yuanmo_tujian", "mijin_tujian", "shengyiwu_tujian"]
+const list = ["wuqi_tujian","shiwu_tujian", "yuanmo_tujian", "mijin_tujian", "shengyiwu_tujian"]
 export async function AtlasAlias(e) {
 	if (!Cfg.get("Atlas.all")) {
 		return false;
@@ -25,7 +26,7 @@ export async function AtlasAlias(e) {
 	}
 	if (await Atlas_list(e)) return true;
 	if (await roleInfo(e)) return true;
-	if (await weaponInfo(e)) return true;
+	// if (await weaponInfo(e)) return true;
 	// if (await foodInfo(e)) return true;
 	// if (await RelicsInfo(e)) return true;
 	// if (await monsterInfo(e)) return true;
@@ -37,16 +38,16 @@ export async function AtlasAlias(e) {
 export async function roleInfo(e) {
 	// let msg=e.msg.replace(/#|图鉴/g,"");
 	let msg = e.msg.replace(/#|＃|信息|图鉴|命座|天赋|突破/g, "");
-	let id = YunzaiApps.mysInfo.roleIdToName(msg);
+	let id = gsCfg.roleNameToID(msg)
 	let name;
 	if (["10000005", "10000007", "20000000"].includes(id)) {
-		if (!["风主", "岩主", "雷主"].includes(msg)) {
-			e.reply("请选择：风主图鉴、岩主图鉴、雷主图鉴");
+		if (!["风主", "岩主", "雷主","草主"].includes(msg)) {
+			e.reply("请选择：风主图鉴、岩主图鉴、雷主图鉴、草主图鉴");
 			return true;
 		}
 		name = msg;
 	} else {
-		name = YunzaiApps.mysInfo.roleIdToName(id, true);
+		name = gsCfg.roleIdToName(id, true);
 		if (!name) return false;
 	}
 	send_Msg(e, "juese_tujian", name)
@@ -54,13 +55,14 @@ export async function roleInfo(e) {
 }
 
 const send_Msg = function(e, type, name) {
-	let path = `${_path}/plugins/xiaoyao-cvs-plugin/resources/xiaoyao-plus/${type}/${name}.png`
-	if (fs.existsSync(path)) {
-		e.reply(segment.image(`file:///${path}`));
-		return true;
-	}
+	let path;
 	if (type == "all") {
 		for (let val of list) {
+			path= `${_path}/plugins/xiaoyao-cvs-plugin/resources/xiaoyao-plus/${val}/${name}.png`
+			if (fs.existsSync(path)) {
+				e.reply(segment.image(`file:///${path}`));
+				return true;
+			}
 			let new_name = info_img(e, Data.readJSON(`${_path}/plugins/xiaoyao-cvs-plugin/resources/Atlas_alias/`,
 				val), name)
 			if (new_name) {
@@ -77,43 +79,43 @@ const send_Msg = function(e, type, name) {
 	e.reply(segment.image(`file:///${path}`));
 	return true;
 }
-let weapon = new Map();
-let weaponFile = [];
-await init();
-export async function init(isUpdate = false) {
-	let weaponJson = JSON.parse(fs.readFileSync("./config/genshin/weapon.json", "utf8"));
-	for (let i in weaponJson) {
-		for (let val of weaponJson[i]) {
-			weapon.set(val, i);
-		}
-	}
-	let paths = "./plugins/xiaoyao-cvs-plugin/resources/xiaoyao-plus/wuqi_tujian";
-	if (!fs.existsSync(paths)) {
-		return true;
-	}
-	weaponFile = fs.readdirSync(paths);
-	for (let val of weaponFile) {
-		let name = val.replace(".png", "");
-		weapon.set(name, name);
-	}
-}
+// let weapon = new Map();
+// let weaponFile = [];
+// await init();
+// export async function init(isUpdate = false) {
+// 	let weaponJson = JSON.parse(fs.readFileSync("./config/genshin/weapon.json", "utf8"));
+// 	for (let i in weaponJson) {
+// 		for (let val of weaponJson[i]) {
+// 			weapon.set(val, i);
+// 		}
+// 	}
+// 	let paths = "./plugins/xiaoyao-cvs-plugin/resources/xiaoyao-plus/wuqi_tujian";
+// 	if (!fs.existsSync(paths)) {
+// 		return true;
+// 	}
+// 	weaponFile = fs.readdirSync(paths);
+// 	for (let val of weaponFile) {
+// 		let name = val.replace(".png", "");
+// 		weapon.set(name, name);
+// 	}
+// }
 
-export async function weaponInfo(e) {
-	let msg = e.msg || '';
-	if (e.atBot) {
-		msg = "#" + msg.replace("#", "");
-	}
-	if (!/(#*(.*)(信息|图鉴|突破|武器|材料)|#(.*))$/.test(msg)) return;
+// export async function weaponInfo(e) {
+// 	let msg = e.msg || '';
+// 	if (e.atBot) {
+// 		msg = "#" + msg.replace("#", "");
+// 	}
+// 	if (!/(#*(.*)(信息|图鉴|突破|武器|材料)|#(.*))$/.test(msg)) return;
 
-	let name = weapon.get(msg.replace(/#|＃|信息|图鉴|突破|武器|材料/g, ""));
+// 	let name = weapon.get(msg.replace(/#|＃|信息|图鉴|突破|武器|材料/g, ""));
 
-	if (name) {
-		send_Msg(e, "wuqi_tujian", name)
-		return true;
-	}
+// 	if (name) {
+// 		send_Msg(e, "wuqi_tujian", name)
+// 		return true;
+// 	}
 
-	return false;
-}
+// 	return false;
+// }
 export async function Atlas_list(e) {
 	let list = Data.readJSON(`${_path}/plugins/xiaoyao-cvs-plugin/resources/Atlas_alias/`, "Atlas_list");
 	let name = e.msg.replace(/#|井/g, "")

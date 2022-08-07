@@ -13,9 +13,7 @@ import {
 	Cfg
 } from "../components/index.js";
 import Common from "../components/Common.js";
-import {
-	init
-} from "../apps/xiaoyao_image.js"
+
 
 const require = createRequire(
 	import.meta.url);
@@ -23,6 +21,7 @@ let cfgMap = {
 	"体力": "sys.Note",
 	"帮助": "sys.help",
 	"匹配": "sys.Atlas",
+	"戳一戳":"note.poke",
 	"模板": "mb.len",
 	"目录":"Atlas.all",
 };
@@ -88,11 +87,11 @@ export async function sysCfg(e, {
 		Note: getStatus("sys.Note",false),
 		Atlas: getStatus("sys.Atlas",false),
 		len:Cfg.get("mb.len", 0),
+		 poke: getStatus("note.poke",false),
 		imgPlus: fs.existsSync(plusPath),
 		bg: await rodom(), //获取底图
 		Atlasall:getStatus("Atlas.all",false),
 	}
-	console.log(cfg)
 	//渲染图像
 	return await Common.render("admin/index", {
 		...cfg,
@@ -149,20 +148,18 @@ export async function updateRes(e) {
 			cwd: `${resPath}/xiaoyao-plus/`
 		}, function(error, stdout, stderr) {
 			//console.log(stdout);
-			if (/Already up to date/.test(stdout)) {
+			if (/Already up to date/.test(stdout)||stdout.includes("最新")) {
 				e.reply("目前所有图片都已经是最新了~");
 				return true;
 			}
 			let numRet = /(\d*) files changed,/.exec(stdout);
 			if (numRet && numRet[1]) {
-				init()
 				e.reply(`报告主人，更新成功，此次更新了${numRet[1]}个图片~`);
 				return true;
 			}
 			if (error) {
 				e.reply("更新失败！\nError code: " + error.code + "\n" + error.stack + "\n 请稍后重试。");
 			} else {
-				init()
 				e.reply("图片加量包更新成功~");
 			}
 		});
@@ -175,7 +172,6 @@ export async function updateRes(e) {
 			if (error) {
 				e.reply("角色图片加量包安装失败！\nError code: " + error.code + "\n" + error.stack + "\n 请稍后重试。");
 			} else {
-				init()
 				e.reply("角色图片加量包安装成功！您后续也可以通过 #图鉴更新 命令来更新图像");
 			}
 		});
@@ -201,7 +197,7 @@ export async function updateMiaoPlugin(e) {
 		cwd: `${_path}/plugins/xiaoyao-cvs-plugin/`
 	}, function(error, stdout, stderr) {
 		//console.log(stdout);
-		if (/Already up[ -]to[ -]date/.test(stdout)) {
+		if (/Already up[ -]to[ -]date/.test(stdout)||stdout.includes("最新")) {
 			e.reply("目前已经是最新版图鉴插件了~");
 			return true;
 		}
