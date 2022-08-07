@@ -22,9 +22,30 @@
 	min-height: 627px;
 	height: auto;
 	width: 1137px;
-	background-color: rgba(0, 0, 0, 0.5);
+	/* background-color: rgba(0, 0, 0, 0.5); */
+	 color: #fff;	/*全局字体样式 */
+	/* -webkit-text-stroke: 0.1px #a033c9; /*字体样式描边色 */ 
 }
-
+/**
+ * 这个是派遣头像位置
+ */
+.icon {
+	vertical-align: middle;
+	display: inline-block;
+	position: absolute;
+	margin-left: -5px;
+	top: -15px;
+	left: 2px;
+}
+/**
+ * 设置派遣的距离
+ */
+.li {
+	width: 44%;
+	display: inline-block;
+	position: relative;
+	margin-bottom: 35px;
+}
 .left_model {
 	width: calc(50% - 136px);
 	padding: 75px 0;
@@ -53,21 +74,22 @@
 .title {
 	font-size: 24px;
 	font-family: "MiSans-Regular";
-	color: #444444;
+	/* color: #444444; */
 	display: block;
 	text-align: left;
+	text-shadow: 0 0 5px #83ddf8,0 0 5px #83ddf8,0 0 5px #83ddf8,0 0 5px #83ddf8;	/* //设置发光效果 */
 	src: url("{{_res_path}}font/MiSans-Regular.ttf");
 }
 
 .bottom {
 	text-align: left;
-	color: #a9834f;
+	/* color: #a9834f; */
 	font-family: "MiSans-Regular";
 }
 
 .time {
 	border-radius: 15px;
-	background-color: #a9834f;
+	background-color: rgb(143, 225, 250);
 	color: #fff;
 	text-align: center;
 	padding: 4px 10px;
@@ -91,7 +113,7 @@
 	font-size: 30px;
 	font-family: "HYWenHei";
 	text-align: center;
-	color: #a9843f;
+	/* color: #a9843f; */
 	/* float: right; */
 	width: 170px;
 	/* margin-top: 10px; */
@@ -112,7 +134,10 @@
 	width: 364px;
 	height: 50px;
 	line-height: 50px;
-	color: #a9843f;
+	/* color: #a033c9; */
+	color: #fff;
+	text-shadow: 0 0 5px #83ddf8,0 0 5px #83ddf8,0 0 5px #83ddf8,0 0 5px #83ddf8;	/* //设置发光效果 */
+	/* border: 1px solid #a033c9; */
 	font-size: 24px;
 	font-family: 'HYWenHei';
 }
@@ -121,14 +146,6 @@
 	margin-top: 45px;
 }
 
-.icon {
-	vertical-align: middle;
-	display: inline-block;
-	position: absolute;
-	margin-left: -5px;
-	top: -20px;
-	left: -5px;
-}
 
 .icon img {
 	width: 78px;
@@ -141,19 +158,15 @@
 	width: calc(80px);
 	font-size: 16px;
 	text-align: center;
-	color: #a9843f;
+	/* color: #a9843f; */
 	position: absolute;
 	font-family: "MiSans-Medium";
+	text-shadow: 0 0 5px #83ddf8,0 0 5px #83ddf8,0 0 5px #83ddf8,0 0 5px #83ddf8;	/* //设置发光效果 */
 	top: 20%;
 	margin-left: 25px;
 }
 
-.li {
-	width: 44%;
-	display: inline-block;
-	position: relative;
-	margin-bottom: 42px;
-}
+
 
 .circleProgress_wrapper {
 	width: 64px;
@@ -182,57 +195,10 @@
 	/* border: solid 1px red; */
 }
 
-.circleProgress {
-	width: 58px;
-	height: 58px;
-	border: 3px solid rgb(172, 172, 172);
-	position: absolute;
-	top: 0;
-	border-radius: 50%;
-	transform: rotate(-135deg);
-}
-
-.rightcircle {
-	border-top: 3px solid rgb(218, 252, 24);
-	border-right: 3px solid rgb(218, 252, 24);
-	right: 0;
-	animation: circleProgressLoad_right;
-}
-
-.leftcircle {
-	border-bottom: 3px solid rgb(218, 252, 24);
-	border-left: 3px solid rgb(218, 252, 24);
-	left: 0;
-	animation: circleProgressLoad_right 0.1ms linear 0ms normal forwards;
-}
-
-@keyframes circleProgressLoad_right {
-	0% {
-		-webkit-transform: rotate(-135deg);
-	}
-
-	50%,
-	100% {
-		-webkit-transform: rotate(45deg);
-	}
-}
-
-@keyframes circleProgressLoad_left {
-
-	0%,
-	50% {
-		-webkit-transform: rotate(-135deg);
-	}
-
-	100% {
-		-webkit-transform: rotate(45deg);
-	}
-}
-
 .bottom_time {
 	display: flex;
 	font-size: 20px;
-	color: #d9766c;
+	/* color: #d9766c; */
 	font-family: "HYWenHei";
 	text-align: center;
 	width: 200px;
@@ -255,7 +221,7 @@
 }
 
 .red {
-	color: #d9766c;
+	/* color: #d9766c; */
 }
 
 .user_null {
