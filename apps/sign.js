@@ -11,18 +11,25 @@ import {
 } from '../components/Changelog.js';
 import gsCfg from '../model/gsCfg.js';
 import fs from "fs";
+import {
+	segment
+} from "oicq";
 import YAML from 'yaml'
 export const rule = {
 	mysSign: {
 		reg: "^#*(米游社|mys|社区)(原神|崩坏3|崩坏2|未定事件簿|大别野|崩坏星穹铁道|绝区零|全部)签到$",
 		describe: "米游社米游币签到（理论上会签到全部所以区分开了）"
 	},
+	bbsSeach:{
+		reg: "^#*(米游币|米币)查询$",
+		describe: "米币查询"
+	},
 	sign: {
-		reg: "^#*(崩坏3|崩坏2|未定事件簿)签到$",
+		reg: "^#*(原神|崩坏3|崩坏2|未定事件簿)签到$",
 		describe: "米社规则签到"
 	},
 	signlist: {
-		reg: "^#(米游币|米社)全部签到$",
+		reg: "^#(米游币|米社(原神|崩坏3|崩坏2|未定事件簿)*)全部签到$",
 		describe: "米游币全部签到"
 	},
 	sendyunTime: {
@@ -83,7 +90,7 @@ export async function sign(e) {
 	let ForumData = await getDataList(msg);
 	e.reply(`开始尝试${msg}签到预计${msg=='全部'?"60":"5-10"}秒~`)
 	for (let forum of ForumData) {
-		if (!(["崩坏3", "崩坏2", "未定事件簿"].includes(forum.name))) {
+		if (!(["原神","崩坏3", "崩坏2", "未定事件簿"].includes(forum.name))) {
 			continue;
 		}
 		resultMessage += `**${forum.name}**\n`
@@ -97,7 +104,7 @@ export async function sign(e) {
 				});
 			}, RETRY_OPTIONS);
 			Bot.logger.info(`${forum.name} 签到结果: [${resObj.message}]`);
-			resultMessage += `签到: [${resObj.message}]\n`;
+			resultMessage += `签到: \n${resObj.message}\n`;
 		} catch (e) {
 			Bot.logger.error(`${forum.name} 签到失败 [${e.message}]`);
 			resultMessage += `签到失败: [${e.message}]\n`;
@@ -119,9 +126,23 @@ export async function mysSign(e) {
 		e.reply("未读取到stoken请检查cookies是否包含login_ticket、以及云崽是否为最新版本V3、V2兼容")
 		return true;
 	}
-
 	START = moment().unix();
 	let resultMessage = "";
+	let resObj=await mysSeach(e)
+	if(resObj?.data?.can_get_points===0){
+		resultMessage+=`今日米游币任务已完成~\n请勿重复操作\n当前米游币总持有数量为：${resObj.data.total_points}`;
+		await replyMsg(e, resultMessage);
+		return true
+	}else if(!resObj?.data){
+		resultMessage+=`登录Stoken失效请重新获取cookies保存~`;
+		await replyMsg(e, resultMessage);
+		fs.unlink(`${YamlDataUrl}/${e.user_id}.yaml`,function(error){
+			if(error){
+				return ""
+			}
+		})
+		return true;
+	}
 	// Execute task
 	let msg = e.msg.replace(/#|签到|井|米游社|mys|社区/g, "");
 	let ForumData = await getDataList(msg);
@@ -137,7 +158,7 @@ export async function mysSign(e) {
 					return retry(e);
 				});
 			}, RETRY_OPTIONS);
-			Bot.logger.info(`${forum.name} 签到结果: [${resObj.message}]`);
+			Bot.logger.mark(`${e.user_id}:${forum.name} 签到结果: [${resObj.message}]`);
 			resultMessage += `签到: [${resObj.message}]\n`;
 		} catch (e) {
 			Bot.logger.error(`${forum.name} 签到失败 [${e.message}]`);
@@ -203,11 +224,49 @@ export async function mysSign(e) {
 	return true
 }
 
+export async function bbsSeach(e){
+	START = moment().unix();
+	let isck = await cookie(e);
+	if (!isck) {
+		return true;
+	}
+	let miHoYoApi = new MihoYoApi(e);
+	if (Object.keys((await miHoYoApi.getStoken(e.user_id))).length == 0) {
+		let cookiesDoc = await getcookiesDoc()
+		await replyMsg(e, "未读取到stoken请检查cookies是否包含login_ticket，请先绑定stoken再查询~\n"+cookiesDoc);
+		return true;
+	}
+	let resObj=await mysSeach(e)
+	if(!resObj?.data){
+		await replyMsg(e, `登录Stoken失效请重新获取cookies保存~`);
+		fs.unlink(`${YamlDataUrl}/${e.user_id}.yaml`,function(error){
+			if(error){
+				return ""
+			}
+		})
+		return true;
+	}
+	await replyMsg(e,`当前米游币数量为：${resObj.data.total_points},今日剩余可获取：${resObj.data.can_get_points}`);
+	return true;
+}
+async function mysSeach(e){
+	let miHoYoApi = new MihoYoApi(e);
+	try{
+		let resObj = await promiseRetry((retry, number) => {
+			return miHoYoApi.getTasksList().catch((e) => {
+				return retry(e);
+			});
+		}, RETRY_OPTIONS);
+		return resObj
+	}catch(e){
+		
+	}
+}
 async function replyMsg(e, resultMessage) {
 	const END = moment().unix();
 	Bot.logger.info(`运行结束, 用时 ${END - START} 秒`);
 	resultMessage += `\n用时 ${END - START} 秒`;
-	e.reply(resultMessage);
+	e.reply([segment.at(e.user_id),"\n"+resultMessage]);
 }
 
 async function getDataList(name) {
@@ -290,7 +349,6 @@ export async function allMysSign() {
 	//获取需要签到的用户
 	for (let data of stoken) {
 		let user_id = data.qq;
-		Bot.logger.mark(`正在为qq${user_id}签到`);
 		let e = {
 			user_id,
 			isTask: true
@@ -298,23 +356,16 @@ export async function allMysSign() {
 		e.cookie = `stuid=${data.stuid};stoken=${data.stoken};ltoken=${data.ltoken};`;
 		Bot.logger.mark(`正在为qq${user_id}进行米游币签到中...`);
 		e.msg = "全部"
-		//已签到不重复执行
-		let key = `genshin:mys:signed_bbs:${user_id}`;
-		if (await redis.get(key)) {
-			continue;
-		}
-
 		e.reply = (msg) => {
 			//关闭签到消息推送
 			if (!isPushSign||ismysbool) {
 				return;
 			}
-			if (msg.includes("签到成功") && (cookie.isSignPush === true || cookie.isSignPush === undefined)) {
+			if (msg.includes("OK")) { //签到成功并且不是已签到的才推送
 				// msg = msg.replace("签到成功", "自动签到成功");
 				utils.relpyPrivate(user_id, msg + "\n自动签到成功");
 			}
 		};
-
 		await mysSign(e);
 		await utils.sleepAsync(10000);
 	}
@@ -323,7 +374,7 @@ export async function allMysSign() {
 }
 
 //定时签到任务
-export async function allSign() {
+export async function allSign(e="") {
 	Bot.logger.mark(`开始米社签到任务`);
 	let isAllSign = await gsCfg.getfileYaml(`${_path}/plugins/xiaoyao-cvs-plugin/config/`, "config").isAllSign
 	let userIdList = [];
@@ -336,6 +387,7 @@ export async function allSign() {
 			userIdList.push(user_id)
 		}
 	}
+	let msg=e?.msg;
 	for (let qq of userIdList) {
 		let user_id = qq;
 		let e = {
@@ -343,16 +395,17 @@ export async function allSign() {
 			qq,
 			isTask: true
 		};
-		e.msg = "全部"
+		if(msg){
+			e.msg=msg.replace(/全部|签到|米社/g,"");
+		}else{
+			e.msg = "全部"
+		}
 		Bot.logger.mark(`正在为qq${user_id}米社签到中...`);
 		e.reply = (msg) => {
-			if (!msg.includes("OK")) {
-				return;
-			}
 			if (!isAllSign||isbool) {
 				return;
 			}
-			if (msg.includes("签到成功") && (cookie.isSignPush === true || cookie.isSignPush === undefined)) {
+			if (msg.includes("OK")) {
 				utils.relpyPrivate(qq, msg + "\n自动签到成功");
 			}
 		};
@@ -394,7 +447,7 @@ export async function signlist(e) {
 		await allMysSign()
 	} else {
 		isbool = true;
-		await allSign()
+		await allSign(e)
 	}
 	e.reply(`${msg}签到任务已完成`);
 	ismysbool=false;
@@ -432,13 +485,10 @@ export async function yunSignlist(e){
 		Bot.logger.mark(`正在为qq${user_id}云原神签到中...`);
 		e.msg = "全部"
 		e.reply = (msg) => {
-			if (!msg.includes("OK")) {
-				return;
-			}
 			if (!isYunSignMsg||isYun) {
 				return;
 			}
-			if (msg.includes("签到成功")) {
+			if (msg.includes("领取奖励")) {
 				utils.relpyPrivate(qq, msg + "\n云原神自动签到成功");
 			}
 		};
